@@ -129,17 +129,6 @@ class RLBenchDataset(Dataset):
         return rgb / 2 + 0.5
 
     def __getitem__(self, episode_id):
-        """
-        the episode item: [
-            [frame_ids],  # we use chunk and max_episode_length to index it
-            [obs_tensors],  # wrt frame_ids, (n_cam, 2, 3, 256, 256)
-                obs_tensors[i][:, 0] is RGB, obs_tensors[i][:, 1] is XYZ
-            [action_tensors],  # wrt frame_ids, (1, 8)
-            [camera_dicts],
-            [gripper_tensors],  # wrt frame_ids, (1, 8)
-            [trajectories]  # wrt frame_ids, (N_i, 8)
-        ]
-        """
         episode_id %= self._num_episodes
         task, variation, file = self._episodes[episode_id]
 
@@ -147,6 +136,17 @@ class RLBenchDataset(Dataset):
         episode = self.read_from_cache(file)
         if episode is None:
             return None
+        """
+        the episode item: [
+            [frame_ids],  # e.g., [0,1,2,...n_keyposes-1]
+            [obs_tensors],  # (n_frames, n_cam, color_or_pos=2, 3, 256, 256)
+                obs_tensors[frame_id, cam_id, 0, :, :, :] is RGB, obs_tensors[frame_id, cam_id, 1, :, :, :] is XYZ
+            [action_tensors],  # List[frame_id]: Tensor[1, 8: (x,y,z,qw,qx,qy,qz,gripper_openness)]
+            [camera_dicts],    # WTF?
+            [gripper_tensors],  # wrt frame_ids, (1, 8) # current gripper pose, same format as [action_tensors]
+            [trajectories]  # wrt frame_ids, (N_i, 8)   # same format; N_i means timestep idx.
+        ]
+        """
 
         # Dynamic chunking so as not to overload GPU memory
         chunk = random.randint(
