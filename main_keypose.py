@@ -196,12 +196,12 @@ class TrainTester(BaseTrainTester):
 
         # Forward pass
         out = model(
-            sample["rgbs"], # Tensor[batch_size, num_cameras=4, 3, H=256, W=256] 
-            sample["pcds"], # Tensor[batch_size, num_cameras=4, 3, H=256, W=256] 
-            sample["instr"], # Tensor[batch_size, max_instruction_length=53, C=512]
-            sample["curr_gripper"], # Tensor[batch_size, dim(x,y,z;qw,qx,qy,qz;openness)=8]
+            sample["rgbs"], # Tensor[batch_size*chunk_size, num_cameras=4, 3, H=256, W=256] 
+            sample["pcds"], # Tensor[batch_size*chunk_size, num_cameras=4, 3, H=256, W=256] 
+            sample["instr"], # Tensor[batch_size*chunk_size, max_instruction_length=53, C=512]
+            sample["curr_gripper"], # Tensor[batch_size*chunk_size, dim(x,y,z;qw,qx,qy,qz;openness)=8]
             # Provide ground-truth action to bias ghost point sampling at training time
-            gt_action=sample["action"] if self.args.use_ground_truth_position_for_sampling_train else None # Tensor[batch_size, dim(x,y,z;qw,qx,qy,qz;openness)=8]
+            gt_action=sample["action"] if self.args.use_ground_truth_position_for_sampling_train else None # Tensor[batch_size*chunk_size, dim(x,y,z;qw,qx,qy,qz;openness)=8]
         )
 
         # Backward pass

@@ -6,9 +6,9 @@ valset=data/peract/Peract_packaged/val
 lr=1e-4
 num_ghost_points=1000
 num_ghost_points_val=10000
-B=8
+B=3
 C=120
-ngpus=6
+ngpus=1
 
 CUDA_LAUNCH_BLOCKING=1 torchrun --nproc_per_node $ngpus --master_port $RANDOM \
     main_keypose.py \
@@ -40,4 +40,5 @@ CUDA_LAUNCH_BLOCKING=1 torchrun --nproc_per_node $ngpus --master_port $RANDOM \
     --position_loss_coeff 1 \
     --cameras left_shoulder right_shoulder wrist front\
     --max_episodes_per_task -1 \
-    --run_log_dir act3d_multitask-C$C-B$B-lr$lr
+    --run_log_dir act3d_multitask-C$C-B$B-lr$lr \
+    --max_episode_length 1
