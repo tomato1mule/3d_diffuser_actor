@@ -9,14 +9,14 @@ import torch
 import numpy as np
 import tap
 
-from diffuser_actor.keypose_optimization.act3d import Act3D
-from diffuser_actor.trajectory_optimization.diffuser_actor import DiffuserActor
 from utils.common_utils import (
     load_instructions,
     get_gripper_loc_bounds,
     round_floats
 )
 from utils.utils_with_rlbench import RLBenchEnv, Actioner, load_episodes
+from diffuser_actor.keypose_optimization.act3d import Act3D
+from diffuser_actor.trajectory_optimization.diffuser_actor import DiffuserActor
 
 
 class Arguments(tap.Tap):
