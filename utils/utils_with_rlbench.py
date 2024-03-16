@@ -505,6 +505,9 @@ class RLBenchEnv:
 
             # descriptions, obs = task.reset()
             descriptions, obs = task.reset_to_demo(demo)
+            print(f"Task '{task.get_name()}' (var {variation}) Instructions:")
+            for _desc in descriptions:
+                print(f"  -\"{_desc}\"")
 
             actioner.load_episode(task_str, variation)
 
