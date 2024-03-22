@@ -17,6 +17,11 @@ from utils.common_utils import (
     round_floats
 )
 from utils.utils_with_rlbench import RLBenchEnv, Actioner, load_episodes
+from utils.utils_with_rlbench import RLBenchEnv_Visualization, Actioner_DiffusionEDF
+
+
+from diffedf_v2.model import DiffusionEDFv1
+import pickle
 
 
 class Arguments(tap.Tap):
@@ -70,6 +75,9 @@ class Arguments(tap.Tap):
     use_instruction: int = 1
     rotation_parametrization: str = '6D'
     quaternion_format: str = 'xyzw'
+
+    # Headless evaluation
+    headless = True
 
 
 def load_models(args):
@@ -128,6 +136,8 @@ def load_models(args):
                 args.regress_position_offset),
             use_instruction=bool(args.use_instruction)
         ).to(device)
+    elif args.test_model == 'diffusion-edf':
+        model = DiffusionEDFv1.from_yaml('test_model.yaml').cuda()
     else:
         raise NotImplementedError
 
@@ -162,27 +172,49 @@ if __name__ == "__main__":
     model = load_models(args)
 
     # Load RLBench environment
-    env = RLBenchEnv(
-        data_path=args.data_dir,
-        image_size=[int(x) for x in args.image_size.split(",")],
-        apply_rgb=True,
-        apply_pc=True,
-        headless=bool(args.headless),
-        apply_cameras=args.cameras,
-        collision_checking=bool(args.collision_checking)
-    )
+    if args.test_model == 'diffusion-edf':
+        env = RLBenchEnv_Visualization(
+            data_path=args.data_dir,
+            image_size=[int(x) for x in args.image_size.split(",")],
+            apply_rgb=True,
+            apply_pc=True,
+            headless=bool(args.headless),
+            apply_cameras=args.cameras,
+            collision_checking=bool(args.collision_checking)
+        )
+    else:
+        env = RLBenchEnv(
+            data_path=args.data_dir,
+            image_size=[int(x) for x in args.image_size.split(",")],
+            apply_rgb=True,
+            apply_pc=True,
+            headless=bool(args.headless),
+            apply_cameras=args.cameras,
+            collision_checking=bool(args.collision_checking)
+        )
 
     instruction = load_instructions(args.instructions)
     if instruction is None:
         raise NotImplementedError()
 
-    actioner = Actioner(
-        policy=model,
-        instructions=instruction,
-        apply_cameras=args.cameras,
-        action_dim=args.action_dim,
-        predict_trajectory=bool(args.predict_trajectory)
-    )
+    if args.test_model == 'diffusion-edf':
+        instruction_last_pos = pickle.load(open('instructions/peract/act3d_last_token_indices.pkl', 'rb'))
+        actioner = Actioner_DiffusionEDF(
+            policy=model,
+            instructions=instruction,
+            instructions_last_pos=instruction_last_pos,
+            apply_cameras=args.cameras,
+            action_dim=args.action_dim,
+            predict_trajectory=bool(args.predict_trajectory)
+        )
+    else:
+        actioner = Actioner(
+            policy=model,
+            instructions=instruction,
+            apply_cameras=args.cameras,
+            action_dim=args.action_dim,
+            predict_trajectory=bool(args.predict_trajectory)
+        )
     max_eps_dict = load_episodes()["max_episode_length"]
     task_success_rates = {}
 
